@@ -580,7 +580,7 @@ conda run -n img-frame python -m pytest tests/test_raw_decoder.py -q
 - Create: `app/core/frame_layout.py`
 - Create: `tests/test_frame_layout.py`
 
-- [ ] **步骤 1：写布局失败测试**
+- [x] **步骤 1：写布局失败测试**
 
 `tests/test_frame_layout.py` 写入：
 
@@ -613,17 +613,17 @@ def test_long_text_gets_smaller_font_scale_but_stays_inside():
     assert layout.text_rect[2] <= layout.canvas_size[0]
 ```
 
-- [ ] **步骤 2：实现 `FrameLayout` 数据结构和计算函数**
+- [x] **步骤 2：实现 `FrameLayout` 数据结构和计算函数**
 
 `FrameLayout` 包含 `canvas_size`、`image_rect`、`text_rect`、`border_px`、`font_px` 和 `font_scale`。`calculate_layout(image_size, lines, border_ratio=0.05, font_ratio=0.024)` 按短边计算边框像素：`border_px = max(1, round(min(width, height) * border_ratio))`。
 
 经典外扩规则：左、上、右为 `border_px`；底部为 `border_px + text_area_height`；文字区至少容纳两行字体、行距和上下内边距。原图矩形的宽高必须与输入一致。
 
-- [ ] **步骤 3：实现长文本缩放约束**
+- [x] **步骤 3：实现长文本缩放约束**
 
 使用微软雅黑字体测量文本宽度，从用户字号开始逐步缩小，最低缩放到 60%；计算结果包含统一的水平居中 x 坐标和两行 y 坐标，不进行换行。
 
-- [ ] **步骤 4：运行布局测试**
+- [x] **步骤 4：运行布局测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_frame_layout.py -q
@@ -637,7 +637,7 @@ conda run -n img-frame python -m pytest tests/test_frame_layout.py -q
 - Create: `app/core/frame_renderer.py`
 - Create: `tests/test_frame_renderer.py`
 
-- [ ] **步骤 1：写 8-bit 渲染失败测试**
+- [x] **步骤 1：写 8-bit 渲染失败测试**
 
 `tests/test_frame_renderer.py` 写入：
 
@@ -677,17 +677,17 @@ def test_white_frame_uses_alpha_from_opacity():
     assert tuple(result[0, 0]) == (255, 255, 255, 127)
 ```
 
-- [ ] **步骤 2：实现字体定位和自动文字颜色**
+- [x] **步骤 2：实现字体定位和自动文字颜色**
 
 `FrameRenderer` 使用 `ImageFont.truetype("msyh.ttc", size)`；Windows 找不到时依次尝试 `C:/Windows/Fonts/msyh.ttc` 和 `C:/Windows/Fonts/msyh.ttf`，找不到则抛出 `FontUnavailableError`。使用 Pillow `ImageDraw.textbbox` 测量并在 `text_rect` 内居中。
 
 根据相框底色亮度 `(0.299*r + 0.587*g + 0.114*b)` 自动选择黑色或白色文字，深色背景使用白字。
 
-- [ ] **步骤 3：实现纯色画布合成**
+- [x] **步骤 3：实现纯色画布合成**
 
 新建带 Alpha 的 RGBA 画布，先按 `FrameConfig.color` 和 `opacity` 填充外扩区域，再把源 RGB/RGBA 像素复制到 `image_rect`。透明度 Alpha 使用 `int(opacity * 255)`，避免四舍五入造成平台差异。文字只绘制在底部文本区；不改变 `image_rect` 中任何源像素。
 
-- [ ] **步骤 4：运行 8-bit 渲染测试**
+- [x] **步骤 4：运行 8-bit 渲染测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_frame_renderer.py -q
@@ -701,7 +701,7 @@ conda run -n img-frame python -m pytest tests/test_frame_renderer.py -q
 - Modify: `app/core/frame_renderer.py`
 - Create: `tests/test_frame_renderer_16bit.py`
 
-- [ ] **步骤 1：写 16-bit 渲染测试**
+- [x] **步骤 1：写 16-bit 渲染测试**
 
 `tests/test_frame_renderer_16bit.py` 写入：
 
@@ -725,7 +725,7 @@ def test_16bit_source_keeps_dtype_and_source_values():
     assert int(result[y, x, 0]) == 65535
 ```
 
-- [ ] **步骤 2：实现位深归一化和反归一化**
+- [x] **步骤 2：实现位深归一化和反归一化**
 
 渲染器根据 `source.dtype` 选择 8-bit 或 16-bit通道：
 
@@ -735,7 +735,7 @@ max_value = 255 if source.dtype == np.uint8 else 65535
 
 颜色和 Alpha 先以 0 到 1 的浮点值计算，再乘以 `max_value` 转回源 dtype；文字蒙版使用同样的缩放，不将 16-bit 降级为 8-bit。
 
-- [ ] **步骤 3：运行 16-bit 测试**
+- [x] **步骤 3：运行 16-bit 测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_frame_renderer_16bit.py -q
@@ -749,7 +749,7 @@ conda run -n img-frame python -m pytest tests/test_frame_renderer_16bit.py -q
 - Modify: `app/core/frame_renderer.py`
 - Create: `tests/test_frosted_renderer.py`
 
-- [ ] **步骤 1：写磨砂行为测试**
+- [x] **步骤 1：写磨砂行为测试**
 
 `tests/test_frosted_renderer.py` 写入：
 
@@ -778,11 +778,11 @@ def test_frosted_frame_changes_outer_pixels_but_not_original_area():
     assert not np.array_equal(result[0, 0, :3], source[0, 0])
 ```
 
-- [ ] **步骤 2：实现外扩采样、模糊和颜色叠加**
+- [x] **步骤 2：实现外扩采样、模糊和颜色叠加**
 
 只从源图边缘生成外扩背景，使用 Pillow `ImageFilter.GaussianBlur`，模糊半径为 `round(short_edge * blur_ratio)`；按照 `FrameConfig.opacity` 叠加颜色，最后复制原图区域并绘制文字。
 
-- [ ] **步骤 3：运行磨砂测试**
+- [x] **步骤 3：运行磨砂测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_frosted_renderer.py -q
@@ -796,7 +796,7 @@ conda run -n img-frame python -m pytest tests/test_frosted_renderer.py -q
 - Create: `app/core/image_exporter.py`
 - Create: `tests/test_exporter.py`
 
-- [ ] **步骤 1：写导出失败测试**
+- [x] **步骤 1：写导出失败测试**
 
 `tests/test_exporter.py` 写入：
 
@@ -823,7 +823,7 @@ def test_exports_png_with_icc_but_without_text_metadata(tmp_path):
     assert not any(key in output.info for key in ("exif", "xmp", "XML:com.adobe.xmp", "parameters"))
 ```
 
-- [ ] **步骤 2：实现最小 PNG 写出接口**
+- [x] **步骤 2：实现最小 PNG 写出接口**
 
 `ImageExporter.write(image, destination, icc_profile)`：
 
@@ -835,11 +835,11 @@ def test_exports_png_with_icc_but_without_text_metadata(tmp_path):
 
 同时提供 `ImageExporter.export(image, destination, icc_profile, config)` 作为会话层调用入口；该方法只负责接收并记录当前配置，然后调用 `write`，不把配置写入 PNG。
 
-- [ ] **步骤 3：实现临时文件和原子替换**
+- [x] **步骤 3：实现临时文件和原子替换**
 
 先在目标目录创建带随机后缀的临时 PNG；写入成功后使用 `Path.replace` 移动到已经由 `OutputNaming` 确定的唯一目标；失败时删除临时文件并重新抛出 `app.core.errors.ExportError`。
 
-- [ ] **步骤 4：运行导出测试**
+- [x] **步骤 4：运行导出测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_exporter.py -q

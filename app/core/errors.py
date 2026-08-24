@@ -16,3 +16,7 @@ class RawDecodeError(ImgFrameError):
 
 class ExportError(ImgFrameError):
     code = "export_failed"
+
+
+class FontUnavailableError(ImgFrameError):
+    code = "font_unavailable"
