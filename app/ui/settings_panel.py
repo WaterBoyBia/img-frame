@@ -4,6 +4,7 @@ from PySide6.QtCore import Signal, Qt, QSignalBlocker
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QColorDialog,
+    QButtonGroup,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -61,8 +62,11 @@ class SettingsPanel(QWidget):
         material_row = QHBoxLayout()
         self.solid_button = QPushButton("纯色")
         self.frosted_button = QPushButton("磨砂")
+        self.material_group = QButtonGroup(self)
+        self.material_group.setExclusive(True)
         for button in (self.solid_button, self.frosted_button):
             button.setCheckable(True)
+            self.material_group.addButton(button)
             material_row.addWidget(button)
             button.clicked.connect(self._emit_frame_config)
         self.solid_button.setChecked(True)

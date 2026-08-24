@@ -26,7 +26,9 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.controller = controller or SessionController()
         self.settings = QSettings("img-frame", "img-frame")
-        self._pool = QThreadPool.globalInstance()
+        self._pool = QThreadPool(self)
+        self._pool.setMaxThreadCount(2)
+        self._workers: set[QRunnable] = set()
         self._session_generation = 0
         self._preview_timer = QTimer(self)
         self._preview_timer.setSingleShot(True)
@@ -119,7 +121,7 @@ class MainWindow(QMainWindow):
         )
         worker.signals.succeeded.connect(self._open_succeeded)
         worker.signals.failed.connect(self._open_failed)
-        self._pool.start(worker)
+        self._start_worker(worker)
 
     def _open_succeeded(self, session, preview, generation: int) -> None:
         if generation != self._session_generation:
@@ -179,7 +181,7 @@ class MainWindow(QMainWindow):
         )
         worker.signals.succeeded.connect(self._preview_succeeded)
         worker.signals.failed.connect(self._preview_failed)
-        self._pool.start(worker)
+        self._start_worker(worker)
 
     def _preview_succeeded(self, preview, generation: int) -> None:
         if generation == self._session_generation:
@@ -210,7 +212,23 @@ class MainWindow(QMainWindow):
         worker = _ExportWorker(self.controller, self._session_generation)
         worker.signals.succeeded.connect(self._export_succeeded)
         worker.signals.failed.connect(self._export_failed)
+        self._start_worker(worker)
+
+    def _start_worker(self, worker: QRunnable) -> None:
+        self._workers.add(worker)
+        worker.signals.succeeded.connect(
+            lambda *args, active_worker=worker: self._workers.discard(active_worker)
+        )
+        worker.signals.failed.connect(
+            lambda *args, active_worker=worker: self._workers.discard(active_worker)
+        )
         self._pool.start(worker)
+
+    def closeEvent(self, event) -> None:
+        self._preview_timer.stop()
+        self._pool.waitForDone()
+        self._workers.clear()
+        super().closeEvent(event)
 
     def _export_succeeded(self, destination: str, generation: int) -> None:
         if generation != self._session_generation:

@@ -84,28 +84,52 @@ class FrameRenderer:
         if not visible_lines or layout.text_rect is None:
             return
         try:
-            font = load_microsoft_yahei(layout.font_px)
+            fonts = tuple(
+                load_microsoft_yahei(
+                    layout.font_px,
+                    bold=layout.bold_first_line and index == 0,
+                )
+                for index in range(len(visible_lines))
+            )
         except FontUnavailableError:
             raise
         except OSError as exc:
             raise FontUnavailableError("Microsoft YaHei font is unavailable") from exc
 
-        mask = Image.new("L", layout.canvas_size, 0)
+        rect_x, rect_y, rect_width, rect_height = layout.text_rect
+        mask = Image.new("L", (rect_width, rect_height), 0)
         draw = ImageDraw.Draw(mask)
-        for line, position in zip(visible_lines, layout.text_positions):
-            draw.text(position, line, font=font, fill=255)
-        mask_array = np.asarray(mask, dtype=np.float64) / 255.0
+        for line, position, font in zip(
+            visible_lines,
+            layout.text_positions,
+            fonts,
+            strict=True,
+        ):
+            draw.text(
+                (position[0] - rect_x, position[1] - rect_y),
+                line,
+                font=font,
+                fill=255,
+            )
+        mask_array = np.asarray(mask, dtype=np.uint32)
         luminance = (
             0.299 * config.color[0]
             + 0.587 * config.color[1]
             + 0.114 * config.color[2]
         )
         text_value = 0 if luminance >= 128 else max_value
-        blend = mask_array[:, :, None]
-        canvas[:, :, :3] = np.rint(
-            canvas[:, :, :3].astype(np.float64) * (1.0 - blend)
-            + text_value * blend
-        ).astype(canvas.dtype)
+        region = canvas[
+            rect_y : rect_y + rect_height,
+            rect_x : rect_x + rect_width,
+            :3,
+        ]
+        alpha = mask_array[:, :, None]
+        blended = (
+            region.astype(np.uint32) * (255 - alpha)
+            + text_value * alpha
+            + 127
+        ) // 255
+        region[:] = blended.astype(canvas.dtype)
 
     @staticmethod
     def _validate_source(source: np.ndarray, layout: FrameLayout) -> None:

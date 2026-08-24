@@ -1,32 +1,88 @@
 # img-frame
 
-`img-frame` 是一个 Windows 桌面工具，用于读取照片的拍摄参数并在原图外部添加相框。相框会显示相机型号、焦距、快门速度、光圈和 ISO 等信息，原图区域保持原始像素质量。
+`img-frame` 是一个 Windows 桌面图片相框工具。程序读取照片中的相机型号、焦距、快门速度、光圈和 ISO，并在原图外侧生成可定制相框。原图区域使用完整分辨率像素参与导出，不从界面预览图生成成品。
 
-## 首阶段范围
+## 当前功能
 
-- 输入支持 JPEG/JPG、PNG 和常见 RAW 格式。
-- 默认使用纯白色经典外扩相框，参数文字分为两行并整体水平居中：第一行显示相机型号，第二行按可用值显示焦距、快门速度、光圈和 ISO。
-- 缺失的拍摄参数会隐藏，对应行或字段会重新排列，不显示空标签。
+- 单张图片打开、参数识别和手动修改。
+- 实时预览纯色或磨砂相框。
+- 自定义相框颜色、透明度、边框厚度、字号和磨砂半径。
+- 自定义输出目录，自动生成不会覆盖已有文件的文件名。
+- 输出统一为无损 PNG，支持 8 位和 16 位图像路径。
 - 字体统一使用微软雅黑。
-- 输出统一为 PNG。只保留源图的 ICC 色彩配置文件，不写出 EXIF、XMP、IPTC、GPS、厂商私有字段或其他文本元数据。
-- 输出文件不会覆盖原图或已有成品，发生重名时会自动生成不冲突的文件名。
 
-## 运行
+## 支持格式
 
-所有程序和测试都使用 `img-frame` conda 环境：
+常规图片：
+
+- JPEG、JPG
+- PNG
+
+RAW 扩展名：
+
+- CR2、CR3、DNG
+- NEF、NRW
+- ARW
+- ORF、RW2、RAF、PEF、SRW、3FR
+
+当前仓库中的真实测试素材为 `img-test/DSC_0050.JPG` 和 `img-test/DSC_0061.JPG`。PNG、16 位 PNG 和 RAW 已有自动化契约测试，但真实文件测试需要后续补充对应素材。
+
+## 默认相框
+
+默认使用白色纯色外扩相框，布局整体居中：
+
+1. 第一行只显示相机型号，并使用微软雅黑粗体。
+2. 第二行依次显示焦距、快门速度、光圈和 ISO。
+3. 只显示参数值，不显示“焦距”“快门”“ISO”等字段名称。
+4. 缺失参数自动隐藏，其余内容重新居中。
+5. 不显示镜头信息。
+
+## 元数据和色彩
+
+- ExifRead 读取常规 EXIF；可用时由 ExifTool 补齐缺失字段。
+- RAW 使用 rawpy/LibRaw 解码为 16 位 sRGB 数据。
+- 输出 PNG 只保留 ICC 色彩配置文件。
+- 输出不写入 EXIF、XMP、IPTC、GPS、厂商私有字段或自定义文本元数据。
+
+## 输出命名
+
+例如源文件为 `DSC_0061.JPG`：
+
+```text
+DSC_0061_framed.png
+DSC_0061_framed_1.png
+DSC_0061_framed_2.png
+```
+
+程序不会覆盖原图或已经存在的导出文件。
+
+## 开发环境
+
+所有命令必须在 `img-frame` conda 环境中运行：
 
 ```powershell
 conda activate img-frame
 python -m pip install -r requirements.txt
-# app.main 将在后续任务中加入；当前任务只完成运行环境和测试骨架
 python -m app.main
 ```
 
-首阶段只提供源码运行方式，不生成 PyInstaller 应用目录或 Inno Setup 安装包。PNG、16-bit PNG 和 RAW 的真实测试素材会在补充后续素材后加入测试。
+也可以在项目目录运行：
+
+```powershell
+.\run.ps1
+```
 
 ## 测试
 
 ```powershell
 conda activate img-frame
+$env:QT_QPA_PLATFORM = "offscreen"
 python -m pytest -q
+python -m compileall app tests
 ```
+
+如果系统临时目录没有写入权限，可以先将 `TEMP` 和 `TMP` 指向项目内的临时目录。
+
+## 当前范围
+
+首阶段只提供源码运行方式，暂不生成 PyInstaller 应用目录或 Inno Setup 安装包。安装程序将在功能和真实格式素材验证完成后单独处理。

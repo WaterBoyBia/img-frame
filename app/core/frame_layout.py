@@ -14,6 +14,11 @@ FONT_CANDIDATES = (
     "C:/Windows/Fonts/msyh.ttc",
     "C:/Windows/Fonts/msyh.ttf",
 )
+BOLD_FONT_CANDIDATES = (
+    "msyhbd.ttc",
+    "C:/Windows/Fonts/msyhbd.ttc",
+    "C:/Windows/Fonts/msyhbd.ttf",
+)
 
 
 @dataclass(frozen=True)
@@ -24,6 +29,7 @@ class FrameLayout:
     border_px: int
     font_px: int
     font_scale: float
+    bold_first_line: bool = True
     text_positions: tuple[tuple[int, int], ...] = ()
     text_sizes: tuple[tuple[int, int], ...] = ()
 
@@ -33,6 +39,7 @@ def calculate_layout(
     lines: Sequence[str],
     border_ratio: float = 0.05,
     font_ratio: float = 0.024,
+    bold_first_line: bool = True,
 ) -> FrameLayout:
     width, height = image_size
     _validate_inputs(width, height, border_ratio, font_ratio)
@@ -51,15 +58,23 @@ def calculate_layout(
             border_px=border_px,
             font_px=initial_font_px,
             font_scale=1.0,
+            bold_first_line=False,
         )
 
-    font_px, font_scale, font = _fit_font(
+    font_px, font_scale, fonts = _fit_font(
         visible_lines,
         initial_font_px,
         width,
+        bold_first_line,
     )
-    text_metrics = tuple(_text_metrics(font, line) for line in visible_lines)
-    line_height = max(_font_line_height(font), *(height for _, height, _, _ in text_metrics))
+    text_metrics = tuple(
+        _text_metrics(font, line)
+        for font, line in zip(fonts, visible_lines, strict=True)
+    )
+    line_height = max(
+        *(_font_line_height(font) for font in fonts),
+        *(height for _, height, _, _ in text_metrics),
+    )
     line_spacing = max(1, round(font_px * 0.35))
     vertical_padding = max(1, round(font_px * 0.75))
     line_slots = max(2, len(visible_lines))
@@ -86,15 +101,17 @@ def calculate_layout(
         border_px=border_px,
         font_px=font_px,
         font_scale=font_scale,
+        bold_first_line=bold_first_line,
         text_positions=text_positions,
         text_sizes=text_sizes,
     )
 
 
-def load_microsoft_yahei(size: int) -> FreeTypeFont:
+def load_microsoft_yahei(size: int, bold: bool = False) -> FreeTypeFont:
     """Load the project font from Windows using stable fallback paths."""
     last_error: OSError | None = None
-    for candidate in FONT_CANDIDATES:
+    candidates = BOLD_FONT_CANDIDATES if bold else FONT_CANDIDATES
+    for candidate in candidates:
         try:
             return ImageFont.truetype(candidate, size)
         except OSError as exc:
@@ -106,14 +123,29 @@ def _fit_font(
     lines: Sequence[str],
     initial_size: int,
     available_width: int,
-) -> tuple[int, float, FreeTypeFont]:
+    bold_first_line: bool,
+) -> tuple[int, float, tuple[FreeTypeFont, ...]]:
     minimum_size = max(1, ceil(initial_size * 0.6))
     for size in range(initial_size, minimum_size - 1, -1):
-        font = load_microsoft_yahei(size)
-        if all(_text_metrics(font, line)[0] <= available_width for line in lines):
-            return size, size / initial_size, font
-    font = load_microsoft_yahei(minimum_size)
-    return minimum_size, minimum_size / initial_size, font
+        fonts = _line_fonts(size, len(lines), bold_first_line)
+        if all(
+            _text_metrics(font, line)[0] <= available_width
+            for font, line in zip(fonts, lines, strict=True)
+        ):
+            return size, size / initial_size, fonts
+    fonts = _line_fonts(minimum_size, len(lines), bold_first_line)
+    return minimum_size, minimum_size / initial_size, fonts
+
+
+def _line_fonts(
+    size: int,
+    line_count: int,
+    bold_first_line: bool,
+) -> tuple[FreeTypeFont, ...]:
+    return tuple(
+        load_microsoft_yahei(size, bold=bold_first_line and index == 0)
+        for index in range(line_count)
+    )
 
 
 def _text_metrics(font: FreeTypeFont, text: str) -> tuple[int, int, int, int]:

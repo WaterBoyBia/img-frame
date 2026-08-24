@@ -1161,7 +1161,7 @@ conda run -n img-frame python -m pytest tests/test_error_messages.py -q
 - Create: `tests/test_jpeg_integration.py`
 - Modify: `tests/conftest.py`
 
-- [ ] **步骤 1：写端到端 JPG 导出测试**
+- [x] **步骤 1：写端到端 JPG 导出测试**
 
 `tests/test_jpeg_integration.py` 写入：
 
@@ -1198,11 +1198,11 @@ def test_existing_jpeg_can_be_framed_without_metadata(tmp_path):
     assert output.size == layout.canvas_size
 ```
 
-- [ ] **步骤 2：补充原图区域逐像素断言**
+- [x] **步骤 2：补充原图区域逐像素断言**
 
 在同一测试中根据 `layout.image_rect` 截取输出 RGB/RGBA 区域，与 `loaded.pixels` 使用 `numpy.array_equal` 比较；如果 JPEG 含方向信息，比较对象必须是方向校正后的 `loaded.pixels`。
 
-- [ ] **步骤 3：运行集成测试**
+- [x] **步骤 3：运行集成测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_jpeg_integration.py -q
@@ -1216,7 +1216,7 @@ conda run -n img-frame python -m pytest tests/test_jpeg_integration.py -q
 - Modify: `README.md`
 - Create: `run.ps1`
 
-- [ ] **步骤 1：写中文 README**
+- [x] **步骤 1：写中文 README**
 
 README 说明以下内容：
 
@@ -1232,7 +1232,7 @@ README 说明以下内容：
 后续 PNG、16-bit PNG、RAW 测试素材说明
 ```
 
-- [ ] **步骤 2：实现仅使用 conda 环境的启动脚本**
+- [x] **步骤 2：实现仅使用 conda 环境的启动脚本**
 
 `run.ps1` 内容：
 
@@ -1242,7 +1242,7 @@ conda run -n img-frame python -m app.main
 
 脚本不调用系统 Python、不调用 PyInstaller、不调用 Inno Setup。
 
-- [ ] **步骤 3：运行启动前静态检查**
+- [x] **步骤 3：运行启动前静态检查**
 
 ```powershell
 conda run -n img-frame python -m compileall app tests
@@ -1255,7 +1255,7 @@ conda run -n img-frame python -m compileall app tests
 **Files:**
 - Modify: all files created in tasks 1-19 only when verification exposes a defect
 
-- [ ] **步骤 1：运行全部自动化测试**
+- [x] **步骤 1：运行全部自动化测试**
 
 ```powershell
 $env:QT_QPA_PLATFORM = "offscreen"
@@ -1264,7 +1264,7 @@ conda run -n img-frame python -m pytest -q
 
 预期：所有测试通过，至少覆盖现有两张 JPG、模型、格式化、布局、8-bit/16-bit 合成契约、磨砂、导出和 UI 空状态。
 
-- [ ] **步骤 2：启动真实桌面应用**
+- [x] **步骤 2：启动真实桌面应用**
 
 ```powershell
 conda run -n img-frame python -m app.main
@@ -1272,7 +1272,7 @@ conda run -n img-frame python -m app.main
 
 手动确认：打开两张 `img-test` JPG，参数编辑、相框设置、实时预览、输出目录选择和导出按钮均可用。
 
-- [ ] **步骤 3：验证输出文件**
+- [x] **步骤 3：验证输出文件**
 
 对导出 PNG 检查：
 
@@ -1282,7 +1282,7 @@ conda run -n img-frame python -c "from PIL import Image; import sys; im=Image.op
 
 预期：格式为 `PNG`；ICC 存在时为 `True`；`sorted(im.info.keys())` 不包含 `exif`、`xmp`、`XML:com.adobe.xmp` 或自定义文本键。
 
-- [ ] **步骤 4：执行范围检查**
+- [x] **步骤 4：执行范围检查**
 
 确认本阶段没有创建或调用：
 

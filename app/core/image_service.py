@@ -65,6 +65,7 @@ class ImageService:
             lines,
             border_ratio=session.frame_config.border_ratio,
             font_ratio=session.frame_config.font_ratio,
+            bold_first_line=bool(session.edited_metadata.camera_model),
         )
         return self.renderer.render(session.pixels, layout, session.frame_config, lines)
 

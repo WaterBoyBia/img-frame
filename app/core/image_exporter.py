@@ -31,10 +31,11 @@ class ImageExporter:
             if _is_uint16_color(array):
                 _write_uint16_png(array, destination, icc_profile)
             else:
-                clean_image = _to_clean_image(array)
+                clean_image = _array_to_clean_image(array)
                 save_kwargs: dict[str, Any] = {
                     "format": "PNG",
                     "pnginfo": PngInfo(),
+                    "compress_level": 1,
                 }
                 if icc_profile:
                     save_kwargs["icc_profile"] = icc_profile
@@ -87,7 +88,10 @@ class ImageExporter:
 
 
 def _to_clean_image(image: Image.Image | np.ndarray) -> Image.Image:
-    array = _image_array(image)
+    return _array_to_clean_image(_image_array(image))
+
+
+def _array_to_clean_image(array: np.ndarray) -> Image.Image:
 
     if array.dtype not in (np.uint8, np.uint16):
         raise ExportError("image must use uint8 or uint16 pixels")
@@ -109,7 +113,7 @@ def _image_array(image: Image.Image | np.ndarray) -> np.ndarray:
     if isinstance(image, Image.Image):
         return np.asarray(image).copy()
     if isinstance(image, np.ndarray):
-        return np.array(image, copy=True)
+        return np.asarray(image)
     raise ExportError("image must be a Pillow image or NumPy array")
 
 
@@ -133,7 +137,7 @@ def _write_uint16_png(
     ]
     if icc_profile:
         chunks.append(_png_chunk(b"iCCP", b"icc\x00\x00" + zlib.compress(icc_profile)))
-    chunks.append(_png_chunk(b"IDAT", zlib.compress(bytes(rows))))
+    chunks.append(_png_chunk(b"IDAT", zlib.compress(bytes(rows), level=1)))
     chunks.append(_png_chunk(b"IEND", b""))
     with destination.open("wb") as stream:
         stream.write(b"\x89PNG\r\n\x1a\n")

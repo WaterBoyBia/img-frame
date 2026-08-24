@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.frame_layout import calculate_layout
+from app.core.frame_layout import calculate_layout, load_microsoft_yahei
 
 
 def test_classic_layout_expands_outside_original_image():
@@ -43,6 +43,24 @@ def test_text_positions_center_each_line_in_text_rect():
     text_center = layout.text_rect[0] + layout.text_rect[2] / 2
     for position, text_size in zip(layout.text_positions, layout.text_sizes, strict=True):
         assert position[0] + text_size[0] / 2 == pytest.approx(text_center, abs=1)
+
+
+def test_camera_model_uses_bold_font_metrics():
+    layout = calculate_layout((1200, 800), ["CAMERA", "50mm"])
+    bold_font = load_microsoft_yahei(layout.font_px, bold=True)
+    regular_font = load_microsoft_yahei(layout.font_px)
+
+    bold_bbox = bold_font.getbbox("CAMERA")
+    regular_bbox = regular_font.getbbox("50mm")
+    assert layout.bold_first_line is True
+    assert layout.text_sizes[0][0] == bold_bbox[2] - bold_bbox[0]
+    assert layout.text_sizes[1][0] == regular_bbox[2] - regular_bbox[0]
+
+
+def test_parameter_only_line_can_remain_regular():
+    layout = calculate_layout((1200, 800), ["50mm    100"], bold_first_line=False)
+
+    assert layout.bold_first_line is False
 
 
 @pytest.mark.parametrize("image_size", [(0, 100), (100, 0), (-1, 100)])
