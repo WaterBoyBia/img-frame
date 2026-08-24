@@ -5,6 +5,7 @@ from typing import Any
 
 import exifread
 
+from app.core.exiftool_client import ExifToolClient
 from app.models.metadata import MetadataValues
 
 
@@ -53,6 +54,9 @@ def _format_aperture(value: Any) -> str | None:
 
 
 class MetadataReader:
+    def __init__(self, exiftool: ExifToolClient | None = None) -> None:
+        self.exiftool = exiftool or ExifToolClient()
+
     def read(self, path: Path) -> MetadataValues:
         with path.open("rb") as stream:
             tags = exifread.process_file(stream, details=False)
@@ -62,6 +66,27 @@ class MetadataReader:
         shutter = _format_shutter(tags.get("EXIF ExposureTime"))
         aperture = _format_aperture(tags.get("EXIF FNumber"))
         iso = self._read_iso(tags.get("EXIF ISOSpeedRatings"))
+        values = MetadataValues(
+            camera_model=str(model).strip() if model else None,
+            focal_length_mm=focal,
+            shutter_speed=shutter,
+            aperture=aperture,
+            iso=iso,
+        )
+        supplemental = self.exiftool.read_json(path) if any(
+            value is None for value in (values.camera_model, values.focal_length_mm, values.shutter_speed, values.aperture, values.iso)
+        ) else None
+        if supplemental:
+            values = self._merge_exiftool(values, supplemental[0])
+        return values
+
+    @staticmethod
+    def _merge_exiftool(values: MetadataValues, tags: dict[str, Any]) -> MetadataValues:
+        model = values.camera_model or tags.get("Model")
+        focal = values.focal_length_mm or _ratio_to_float(tags.get("FocalLength"))
+        shutter = values.shutter_speed or _format_shutter(tags.get("ExposureTime"))
+        aperture = values.aperture or _format_aperture(tags.get("FNumber"))
+        iso = values.iso if values.iso is not None else MetadataReader._read_iso(tags.get("ISO"))
         return MetadataValues(
             camera_model=str(model).strip() if model else None,
             focal_length_mm=focal,

@@ -387,7 +387,7 @@ conda run -n img-frame python -m pytest tests/test_metadata_reader.py -q
 - Modify: `app/core/metadata_reader.py`
 - Create: `tests/test_exiftool_client.py`
 
-- [ ] **步骤 1：写命令客户端测试**
+- [x] **步骤 1：写命令客户端测试**
 
 `tests/test_exiftool_client.py` 使用 `unittest.mock.patch`：
 
@@ -420,15 +420,15 @@ def test_unavailable_exiftool_returns_none(tmp_path):
         assert ExifToolClient("missing.exe").read_json(tmp_path / "x.jpg") is None
 ```
 
-- [ ] **步骤 2：实现安全的只读客户端**
+- [x] **步骤 2：实现安全的只读客户端**
 
 `ExifToolClient` 使用 `subprocess.run([...], check=False, capture_output=True, timeout=10)`，禁止 shell；只实现读取，不实现输出元数据写入。解析失败、超时、找不到可执行文件时返回 `None`，并提供 `available` 属性。
 
-- [ ] **步骤 3：接入元数据读取回退**
+- [x] **步骤 3：接入元数据读取回退**
 
 `MetadataReader` 先调用 ExifRead；任一核心字段仍缺失时调用 ExifTool JSON 读取，并仅补齐缺失值，不覆盖 ExifRead 已得到的值。首阶段没有 `tools/exiftool.exe` 时，JPG 仍必须依靠 ExifRead 工作。
 
-- [ ] **步骤 4：运行客户端和回退测试**
+- [x] **步骤 4：运行客户端和回退测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_exiftool_client.py tests/test_metadata_reader.py -q
@@ -442,7 +442,7 @@ conda run -n img-frame python -m pytest tests/test_exiftool_client.py tests/test
 - Create: `app/core/image_loader.py`
 - Create: `tests/test_image_loader.py`
 
-- [ ] **步骤 1：写现有 JPG 加载测试**
+- [x] **步骤 1：写现有 JPG 加载测试**
 
 `tests/test_image_loader.py` 写入：
 
@@ -477,7 +477,7 @@ def test_loads_png_without_text_metadata(tmp_path):
     assert image.bit_depth == 8
 ```
 
-- [ ] **步骤 2：实现 `LoadedImage` 和 Pillow 读取路径**
+- [x] **步骤 2：实现 `LoadedImage` 和 Pillow 读取路径**
 
 `LoadedImage` 使用 dataclass 定义：
 
@@ -507,11 +507,11 @@ class LoadedImage:
 5. 使用 `np.asarray` 转为数组并复制，避免引用关闭后的 Pillow 缓冲区。
 6. 根据 dtype 设置 8 或 16 位深。
 
-- [ ] **步骤 3：实现格式错误和资源错误**
+- [x] **步骤 3：实现格式错误和资源错误**
 
 对不存在路径、未知扩展名、Pillow `UnidentifiedImageError` 和读取权限错误抛出 `app.core.errors.ImageLoadError`，错误消息使用英文异常码，UI 层再转换为中文文案。
 
-- [ ] **步骤 4：运行加载测试**
+- [x] **步骤 4：运行加载测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_image_loader.py -q
@@ -526,7 +526,7 @@ conda run -n img-frame python -m pytest tests/test_image_loader.py -q
 - Modify: `app/core/image_loader.py`
 - Create: `tests/test_raw_decoder.py`
 
-- [ ] **步骤 1：写 RAW 解码器契约测试**
+- [x] **步骤 1：写 RAW 解码器契约测试**
 
 `tests/test_raw_decoder.py` 写入：
 
@@ -558,15 +558,15 @@ def test_decodes_with_camera_white_balance_without_auto_brightening(tmp_path):
     assert result.pixels.dtype == np.uint16
 ```
 
-- [ ] **步骤 2：实现 RAW 解码器**
+- [x] **步骤 2：实现 RAW 解码器**
 
 `RawDecoder.decode` 调用 `rawpy.imread(path)`，再调用 `postprocess(use_camera_wb=True, no_auto_bright=True, output_bps=16, output_color=rawpy.ColorSpace.sRGB)`，返回 RGB `uint16` 数组和 sRGB ICC。资源对象使用上下文管理或 `finally` 关闭；rawpy 异常统一包装为 `app.core.errors.RawDecodeError`。
 
-- [ ] **步骤 3：接入扩展名分派**
+- [x] **步骤 3：接入扩展名分派**
 
 `ImageLoader.load` 对 `.cr2`、`.cr3`、`.nef`、`.nrw`、`.arw`、`.dng`、`.orf`、`.rw2`、`.raf`、`.pef`、`.srw` 和 `.3fr` 调用 `RawDecoder`；RAW 失败抛出 `RawDecodeError`，不回退为低质量 JPEG 预览。
 
-- [ ] **步骤 4：运行 RAW 契约测试**
+- [x] **步骤 4：运行 RAW 契约测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_raw_decoder.py -q
