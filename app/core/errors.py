@@ -20,3 +20,15 @@ class ExportError(ImgFrameError):
 
 class FontUnavailableError(ImgFrameError):
     code = "font_unavailable"
+
+
+class NoSessionError(ImgFrameError):
+    code = "no_session"
+
+
+class InvalidMetadataError(ImgFrameError):
+    code = "invalid_metadata"
+
+
+class OutputNotWritableError(ImgFrameError):
+    code = "output_not_writable"

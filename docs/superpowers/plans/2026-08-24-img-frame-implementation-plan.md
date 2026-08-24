@@ -852,7 +852,7 @@ conda run -n img-frame python -m pytest tests/test_exporter.py -q
 - Create: `app/core/output_naming.py`
 - Create: `tests/test_output_naming.py`
 
-- [ ] **步骤 1：写防覆盖命名测试**
+- [x] **步骤 1：写防覆盖命名测试**
 
 `tests/test_output_naming.py` 写入：
 
@@ -874,11 +874,11 @@ def test_increments_when_output_exists(tmp_path):
     assert unique_output_path(source, tmp_path).name == "DSC_0061_framed_2.png"
 ```
 
-- [ ] **步骤 2：实现确定性路径函数**
+- [x] **步骤 2：实现确定性路径函数**
 
 `unique_output_path(source_path, output_dir)` 使用 `Path.stem` 生成 `_framed.png`，目标已存在时从 `_framed_1.png` 开始递增；不得修改源文件后缀以外的用户文件。
 
-- [ ] **步骤 3：运行命名测试**
+- [x] **步骤 3：运行命名测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_output_naming.py -q
@@ -893,7 +893,7 @@ conda run -n img-frame python -m pytest tests/test_output_naming.py -q
 - Create: `app/core/session_controller.py`
 - Create: `tests/test_session_controller.py`
 
-- [ ] **步骤 1：写会话控制器测试**
+- [x] **步骤 1：写会话控制器测试**
 
 `tests/test_session_controller.py` 使用 fake loader、fake renderer 和 fake exporter：
 
@@ -968,19 +968,19 @@ def test_export_uses_unique_path_and_current_frame_config(tmp_path):
     assert controller.exporter.last_config == controller.session.frame_config
 ```
 
-- [ ] **步骤 2：实现 `ImageService`**
+- [x] **步骤 2：实现 `ImageService`**
 
 `ImageService.open(path)` 编排 `ImageLoader` 和 `MetadataReader`，返回 `ImageSession`；`render_preview(session, max_size)` 只对源像素生成缩放预览；`render_export(session)` 使用完整分辨率调用 `FrameRenderer`。
 
-- [ ] **步骤 3：实现 `SessionController`**
+- [x] **步骤 3：实现 `SessionController`**
 
 控制器保存当前会话、当前输出目录和预览结果，提供 `open_image`、`set_metadata`、`set_frame_config`、`set_output_directory`、`render_preview` 和 `export` 方法。导出前统一检查：存在会话、参数值合法、输出目录可写；不满足时抛出带 `code` 和 `detail` 的 `ImgFrameError`。
 
-- [ ] **步骤 4：实现 150 ms 预览合并策略接口**
+- [x] **步骤 4：实现 150 ms 预览合并策略接口**
 
 控制器只提供 `schedule_preview_update()` 信号入口，实际 Qt 定时器放到 UI 层；同一段时间内多次滑块变化只触发一次 `render_preview`。
 
-- [ ] **步骤 5：运行控制器测试**
+- [x] **步骤 5：运行控制器测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_session_controller.py -q
