@@ -995,7 +995,7 @@ conda run -n img-frame python -m pytest tests/test_session_controller.py -q
 - Create: `app/ui/main_window.py`
 - Create: `tests/test_main_window.py`
 
-- [ ] **步骤 1：写空状态 UI 测试**
+- [x] **步骤 1：写空状态 UI 测试**
 
 `tests/test_main_window.py` 写入：
 
@@ -1011,11 +1011,11 @@ def test_main_window_starts_with_disabled_export(qtbot):
     assert window.open_button.isEnabled()
 ```
 
-- [ ] **步骤 2：实现主窗口骨架**
+- [x] **步骤 2：实现主窗口骨架**
 
 `MainWindow` 使用方案 A 的 `QHBoxLayout`：左侧快捷工具、中央 `PreviewWidget` 占满剩余空间、右侧 `SettingsPanel` 固定宽度 258 px；底部使用输出栏。所有按钮和标签使用中文，应用字体设置为 `Microsoft YaHei UI`，回退 `Microsoft YaHei`。
 
-- [ ] **步骤 3：实现 `app/main.py` 启动入口**
+- [x] **步骤 3：实现 `app/main.py` 启动入口**
 
 ```python
 import sys
@@ -1037,7 +1037,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **步骤 4：运行空状态 UI 测试**
+- [x] **步骤 4：运行空状态 UI 测试**
 
 ```powershell
 $env:QT_QPA_PLATFORM = "offscreen"
@@ -1054,7 +1054,7 @@ conda run -n img-frame python -m pytest tests/test_main_window.py -q
 - Modify: `app/ui/main_window.py`
 - Modify: `tests/test_main_window.py`
 
-- [ ] **步骤 1：写打开图片和参数编辑测试**
+- [x] **步骤 1：写打开图片和参数编辑测试**
 
 追加到 `tests/test_main_window.py`：
 
@@ -1083,19 +1083,19 @@ def test_editing_camera_model_updates_controller(qtbot):
     assert window.controller.session.edited_metadata.camera_model == "TEST CAMERA"
 ```
 
-- [ ] **步骤 2：实现 `PreviewWidget`**
+- [x] **步骤 2：实现 `PreviewWidget`**
 
 使用 `QLabel` 显示预览 `QPixmap`，提供 `set_image`、`set_zoom` 和 `fit_to_window`；不要保存或导出它内部的缩放像素。
 
-- [ ] **步骤 3：实现 `SettingsPanel`**
+- [x] **步骤 3：实现 `SettingsPanel`**
 
 创建相机型号、焦距、快门、光圈和 ISO 编辑框；创建纯色/磨砂分段控件、颜色按钮、透明度/厚度/字号/模糊半径滑块；值变化发出 `metadata_changed` 或 `frame_config_changed` 信号。
 
-- [ ] **步骤 4：实现短延迟刷新和线程任务**
+- [x] **步骤 4：实现短延迟刷新和线程任务**
 
 主窗口使用 `QTimer(singleShot=True)`，超时时间 150 ms；图片加载和完整预览放入 `QThreadPool`/`QRunnable`，结果通过信号回主线程，旧任务结果带 session id，不能覆盖新会话。
 
-- [ ] **步骤 5：运行 UI 测试**
+- [x] **步骤 5：运行 UI 测试**
 
 ```powershell
 $env:QT_QPA_PLATFORM = "offscreen"
@@ -1111,7 +1111,7 @@ conda run -n img-frame python -m pytest tests/test_main_window.py -q
 - Create: `app/ui/error_messages.py`
 - Create: `tests/test_error_messages.py`
 
-- [ ] **步骤 1：写错误文案测试**
+- [x] **步骤 1：写错误文案测试**
 
 `tests/test_error_messages.py` 写入：
 
@@ -1135,19 +1135,19 @@ def test_maps_output_permission_error_to_directory_action():
     assert "其他" in message
 ```
 
-- [ ] **步骤 2：实现结构化错误到中文文案映射**
+- [x] **步骤 2：实现结构化错误到中文文案映射**
 
 `message_for_error(code, detail)` 为 `unsupported_format`、`image_load_failed`、`raw_decode_failed`、`invalid_metadata`、`output_not_writable`、`export_failed`、`font_unavailable` 和 `memory_error` 提供固定中文模板；未知错误显示通用“处理失败，请检查文件和输出目录”。
 
-- [ ] **步骤 3：实现输出目录选择和 QSettings**
+- [x] **步骤 3：实现输出目录选择和 QSettings**
 
 底部目录按钮打开 `QFileDialog.getExistingDirectory`；成功选择后写入 `QSettings("img-frame", "img-frame")` 的 `output_directory`；启动时读取，若路径不存在则回退源目录。
 
-- [ ] **步骤 4：实现导出状态和完成反馈**
+- [x] **步骤 4：实现导出状态和完成反馈**
 
 导出按钮点击后禁用，显示“正在导出…”，通过后台任务调用 `SessionController.export`；成功后显示目标路径，并提供 `QDesktopServices.openUrl(QUrl.fromLocalFile(output_dir))`；失败时删除临时文件、恢复按钮并显示错误文案。
 
-- [ ] **步骤 5：运行错误文案测试**
+- [x] **步骤 5：运行错误文案测试**
 
 ```powershell
 conda run -n img-frame python -m pytest tests/test_error_messages.py -q

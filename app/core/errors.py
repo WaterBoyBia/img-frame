@@ -10,6 +10,10 @@ class ImageLoadError(ImgFrameError):
     code = "image_load_failed"
 
 
+class UnsupportedFormatError(ImageLoadError):
+    code = "unsupported_format"
+
+
 class RawDecodeError(ImgFrameError):
     code = "raw_decode_failed"
 

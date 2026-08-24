@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from app.core.errors import ImageLoadError, RawDecodeError
+from app.core.errors import ImageLoadError, RawDecodeError, UnsupportedFormatError
 
 RAW_EXTENSIONS = {
     ".cr2", ".cr3", ".dng", ".nef", ".nrw", ".arw", ".orf", ".rw2",
@@ -32,7 +32,7 @@ class ImageLoader:
         if path.suffix.lower() in RAW_EXTENSIONS:
             return self._load_raw(path)
         if path.suffix.lower() not in {".jpg", ".jpeg", ".png"}:
-            raise ImageLoadError(f"unsupported format: {path.suffix}")
+            raise UnsupportedFormatError(f"unsupported format: {path.suffix}")
         try:
             with Image.open(path) as original:
                 icc_profile = original.info.get("icc_profile")
