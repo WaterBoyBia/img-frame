@@ -15,7 +15,7 @@ from app.core.errors import (
 )
 from app.core.image_exporter import ImageExporter
 from app.core.image_service import ImageService
-from app.core.output_naming import unique_output_path
+from app.core.output_naming import normalize_output_format, unique_output_path
 from app.models.frame_config import FrameConfig
 from app.models.image_session import ImageSession
 from app.models.metadata import MetadataValues
@@ -31,6 +31,7 @@ class SessionController:
         self.exporter = exporter or ImageExporter()
         self.session: ImageSession | None = None
         self.output_directory: Path | None = None
+        self.output_format = "jpg"
         self.preview: np.ndarray | None = None
         self._preview_pending = False
 
@@ -87,6 +88,14 @@ class SessionController:
         self.output_directory = directory
         return directory
 
+    def set_output_format(self, output_format: str) -> str:
+        try:
+            normalized = normalize_output_format(output_format)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(str(exc)) from exc
+        self.output_format = normalized
+        return normalized
+
     def render_preview(self, max_size: tuple[int, int] | int = (1200, 900)) -> np.ndarray:
         session = self._require_session()
         self.preview = self.image_service.render_preview(session, max_size)
@@ -111,7 +120,11 @@ class SessionController:
         if not _directory_is_writable(output_directory):
             raise OutputNotWritableError(f"output directory is not writable: {output_directory}")
         rendered = self.image_service.render_export(session)
-        destination = unique_output_path(session.source_path, output_directory)
+        destination = unique_output_path(
+            session.source_path,
+            output_directory,
+            self.output_format,
+        )
         try:
             return self.exporter.export(
                 rendered,

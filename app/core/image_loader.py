@@ -6,12 +6,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from app.core.errors import ImageLoadError, RawDecodeError, UnsupportedFormatError
+from app.core.errors import ImageLoadError, UnsupportedFormatError
 
-RAW_EXTENSIONS = {
-    ".cr2", ".cr3", ".dng", ".nef", ".nrw", ".arw", ".orf", ".rw2",
-    ".raf", ".pef", ".srw", ".3fr",
-}
+SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 
 @dataclass
@@ -29,9 +26,7 @@ class ImageLoader:
         path = Path(path)
         if not path.is_file():
             raise ImageLoadError(f"file not found: {path}")
-        if path.suffix.lower() in RAW_EXTENSIONS:
-            return self._load_raw(path)
-        if path.suffix.lower() not in {".jpg", ".jpeg", ".png"}:
+        if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
             raise UnsupportedFormatError(f"unsupported format: {path.suffix}")
         try:
             with Image.open(path) as original:
@@ -64,14 +59,3 @@ class ImageLoader:
         if "transparency" in image.info:
             return image.convert("RGBA")
         return image.convert("RGB")
-
-    @staticmethod
-    def _load_raw(path: Path) -> LoadedImage:
-        try:
-            from app.core.raw_decoder import RawDecoder
-
-            return RawDecoder().decode(path)
-        except RawDecodeError:
-            raise
-        except Exception as exc:
-            raise RawDecodeError(f"unable to decode RAW image: {path}") from exc

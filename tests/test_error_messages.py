@@ -7,7 +7,7 @@ def test_maps_unsupported_format_to_actionable_chinese_message():
     assert "photo.tiff" in message
     assert "JPEG" in message
     assert "PNG" in message
-    assert "RAW" in message
+    assert "RAW" not in message
 
 
 def test_maps_output_permission_error_to_directory_action():

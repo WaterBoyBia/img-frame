@@ -70,8 +70,26 @@ def test_export_uses_unique_path_and_current_frame_config(tmp_path):
 
     output_path = controller.export()
 
-    assert output_path.name == "photo_framed.png"
+    assert output_path.name == "photo_framed.jpg"
     assert exporter.last_config == controller.session.frame_config
+
+
+def test_export_uses_selected_png_format(tmp_path):
+    controller, _ = make_controller_with_fakes()
+    controller.open_image(tmp_path / "photo.jpg")
+    controller.set_output_format("png")
+
+    output_path = controller.export()
+
+    assert output_path.name == "photo_framed.png"
+
+
+def test_output_format_defaults_to_jpg_and_rejects_unknown_values():
+    controller, _ = make_controller_with_fakes()
+
+    assert controller.output_format == "jpg"
+    with pytest.raises(ValueError):
+        controller.set_output_format("tiff")
 
 
 def test_preview_updates_are_coalesced_until_rendered(tmp_path):

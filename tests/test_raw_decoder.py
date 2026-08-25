@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import rawpy
 
-from app.core.errors import RawDecodeError
+from app.core.errors import RawDecodeError, UnsupportedFormatError
 from app.core.image_loader import ImageLoader
 from app.core.raw_decoder import RawDecoder
 
@@ -43,13 +43,12 @@ def test_raw_decode_errors_are_wrapped(tmp_path):
             RawDecoder().decode(raw_path)
 
 
-def test_image_loader_dispatches_raw_extensions(tmp_path):
+def test_image_loader_rejects_raw_extensions(tmp_path):
     raw_path = tmp_path / "sample.cr3"
     raw_path.write_bytes(b"raw")
-    loaded = object()
 
-    with patch("app.core.raw_decoder.RawDecoder.decode", return_value=loaded) as decode:
-        result = ImageLoader().load(raw_path)
+    with patch("app.core.raw_decoder.RawDecoder.decode", return_value=object()) as decode:
+        with pytest.raises(UnsupportedFormatError):
+            ImageLoader().load(raw_path)
 
-    assert result is loaded
-    decode.assert_called_once_with(raw_path)
+    decode.assert_not_called()

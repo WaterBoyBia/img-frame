@@ -8,24 +8,18 @@
 - 实时预览纯色或磨砂相框。
 - 自定义相框颜色、透明度、边框厚度、字号和磨砂半径。
 - 自定义输出目录，自动生成不会覆盖已有文件的文件名。
-- 输出统一为无损 PNG，支持 8 位和 16 位图像路径。
+- 输出格式可选择 JPG 或 PNG，默认 JPG；PNG 保持无损并支持 8 位和 16 位图像路径。
+- JPG 输出使用高质量 8 位 RGB 编码；透明区域会合成到白色背景。
 - 字体统一使用微软雅黑。
 
 ## 支持格式
 
-常规图片：
+输入图片：
 
 - JPEG、JPG
 - PNG
 
-RAW 扩展名：
-
-- CR2、CR3、DNG
-- NEF、NRW
-- ARW
-- ORF、RW2、RAF、PEF、SRW、3FR
-
-当前仓库中的真实测试素材为 `img-test/DSC_0050.JPG` 和 `img-test/DSC_0061.JPG`。PNG、16 位 PNG 和 RAW 已有自动化契约测试，但真实文件测试需要后续补充对应素材。
+当前仓库中的真实测试素材为 `img-test/DSC_0050.JPG` 和 `img-test/DSC_0061.JPG`。PNG、16 位 PNG 和 JPG 输出已有自动化契约测试。
 
 ## 默认相框
 
@@ -40,8 +34,7 @@ RAW 扩展名：
 ## 元数据和色彩
 
 - ExifRead 读取常规 EXIF；可用时由 ExifTool 补齐缺失字段。
-- RAW 使用 rawpy/LibRaw 解码为 16 位 sRGB 数据。
-- 输出 PNG 只保留 ICC 色彩配置文件。
+- 输出 PNG 和 JPG 均只保留 ICC 色彩配置文件。
 - 输出不写入 EXIF、XMP、IPTC、GPS、厂商私有字段或自定义文本元数据。
 
 ## 输出命名
@@ -49,12 +42,12 @@ RAW 扩展名：
 例如源文件为 `DSC_0061.JPG`：
 
 ```text
-DSC_0061_framed.png
-DSC_0061_framed_1.png
-DSC_0061_framed_2.png
+DSC_0061_framed.jpg
+DSC_0061_framed_1.jpg
+DSC_0061_framed_2.jpg
 ```
 
-程序不会覆盖原图或已经存在的导出文件。
+选择 PNG 时扩展名相应替换为 `.png`。程序不会覆盖原图或已经存在的导出文件。
 
 ## 开发环境
 

@@ -10,6 +10,7 @@ def test_main_window_starts_with_disabled_export(qtbot):
 
     assert not window.export_button.isEnabled()
     assert window.open_button.isEnabled()
+    assert window.output_format_combo.currentData() == "jpg"
 
 
 def test_opening_existing_jpeg_enables_export(qtbot):
@@ -21,6 +22,17 @@ def test_opening_existing_jpeg_enables_export(qtbot):
 
     assert window.export_button.isEnabled()
     assert window.camera_model_edit.text()
+
+
+def test_selecting_png_updates_controller_and_export_button(qtbot):
+    from app.ui.main_window import MainWindow
+
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.output_format_combo.setCurrentIndex(window.output_format_combo.findData("png"))
+
+    assert window.controller.output_format == "png"
+    assert window.export_button.text() == "导出 PNG"
 
 
 def test_editing_camera_model_updates_controller(qtbot):

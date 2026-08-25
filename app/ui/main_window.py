@@ -6,6 +6,7 @@ from PySide6.QtCore import QSettings, QThreadPool, QTimer, QUrl, Signal, QRunnab
 from PySide6.QtGui import QDesktopServices, QFont
 from PySide6.QtWidgets import (
     QFileDialog,
+    QComboBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -36,6 +37,7 @@ class MainWindow(QMainWindow):
         self._preview_timer.timeout.connect(self._render_scheduled_preview)
         self._build_ui()
         self._restore_output_directory()
+        self._restore_output_format()
         self._set_application_font()
 
     def _build_ui(self) -> None:
@@ -45,14 +47,22 @@ class MainWindow(QMainWindow):
 
         self.open_button = QPushButton("打开图片")
         self.open_button.clicked.connect(self._open_dialog)
-        self.export_button = QPushButton("导出 PNG")
+        self.export_button = QPushButton("导出 JPG")
         self.export_button.setEnabled(False)
         self.export_button.clicked.connect(self._start_export)
+
+        format_label = QLabel("输出格式")
+        self.output_format_combo = QComboBox()
+        self.output_format_combo.addItem("JPG", "jpg")
+        self.output_format_combo.addItem("PNG", "png")
+        self.output_format_combo.currentIndexChanged.connect(self._output_format_changed)
 
         shortcut = QVBoxLayout()
         shortcut.setContentsMargins(12, 12, 8, 12)
         shortcut.setSpacing(8)
         shortcut.addWidget(self.open_button)
+        shortcut.addWidget(format_label)
+        shortcut.addWidget(self.output_format_combo)
         shortcut.addWidget(self.export_button)
         shortcut.addStretch(1)
         shortcut_widget = QWidget()
@@ -103,7 +113,7 @@ class MainWindow(QMainWindow):
             self,
             "打开图片",
             "",
-            "图片 (*.jpg *.jpeg *.png *.cr2 *.cr3 *.nef *.nrw *.arw *.dng *.orf *.rw2 *.raf *.pef *.srw *.3fr)",
+            "图片 (*.jpg *.jpeg *.png)",
         )
         if path:
             self._start_open(Path(path))
@@ -204,6 +214,19 @@ class MainWindow(QMainWindow):
         except ImgFrameError as exc:
             self._show_error(exc.code, exc.detail)
 
+    def _output_format_changed(self, _index: int) -> None:
+        output_format = self.output_format_combo.currentData()
+        if not output_format:
+            return
+        try:
+            self.controller.set_output_format(str(output_format))
+            self.settings.setValue("output_format", str(output_format))
+            self.export_button.setText(f"导出 {str(output_format).upper()}")
+        except (ImgFrameError, TypeError, ValueError) as exc:
+            detail = getattr(exc, "detail", str(exc))
+            code = getattr(exc, "code", "export_failed")
+            self._show_error(code, detail)
+
     def _start_export(self) -> None:
         if self.controller.session is None:
             return
@@ -250,6 +273,14 @@ class MainWindow(QMainWindow):
         if directory and Path(directory).is_dir():
             self.controller.output_directory = Path(directory)
             self._update_output_directory_label()
+
+    def _restore_output_format(self) -> None:
+        saved = str(self.settings.value("output_format", "jpg")).lower().lstrip(".")
+        index = self.output_format_combo.findData(saved)
+        if index < 0:
+            index = self.output_format_combo.findData("jpg")
+        self.output_format_combo.setCurrentIndex(index)
+        self._output_format_changed(index)
 
     def _update_output_directory_label(self) -> None:
         directory = self.controller.output_directory

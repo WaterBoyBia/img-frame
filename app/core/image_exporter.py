@@ -28,14 +28,26 @@ class ImageExporter:
         self._validate_destination(destination)
         try:
             array = _image_array(image)
-            if _is_uint16_color(array):
-                _write_uint16_png(array, destination, icc_profile)
+            if destination.suffix.lower() == ".png":
+                if _is_uint16_color(array):
+                    _write_uint16_png(array, destination, icc_profile)
+                else:
+                    clean_image = _array_to_clean_image(array)
+                    save_kwargs: dict[str, Any] = {
+                        "format": "PNG",
+                        "pnginfo": PngInfo(),
+                        "compress_level": 1,
+                    }
+                    if icc_profile:
+                        save_kwargs["icc_profile"] = icc_profile
+                    clean_image.save(destination, **save_kwargs)
             else:
-                clean_image = _array_to_clean_image(array)
+                clean_image = _array_to_jpeg_image(array)
                 save_kwargs: dict[str, Any] = {
-                    "format": "PNG",
-                    "pnginfo": PngInfo(),
-                    "compress_level": 1,
+                    "format": "JPEG",
+                    "quality": 95,
+                    "subsampling": 0,
+                    "optimize": True,
                 }
                 if icc_profile:
                     save_kwargs["icc_profile"] = icc_profile
@@ -43,7 +55,7 @@ class ImageExporter:
         except ImgFrameError:
             raise
         except Exception as exc:
-            raise ExportError(f"unable to write PNG: {destination}") from exc
+            raise ExportError(f"unable to write image: {destination}") from exc
         return destination
 
     def export(
@@ -60,7 +72,7 @@ class ImageExporter:
         try:
             descriptor, temporary_name = tempfile.mkstemp(
                 prefix=f".{destination.stem}.",
-                suffix=".tmp.png",
+                suffix=f".tmp{destination.suffix.lower()}",
                 dir=destination.parent,
             )
             os.close(descriptor)
@@ -71,7 +83,7 @@ class ImageExporter:
         except ImgFrameError:
             raise
         except Exception as exc:
-            raise ExportError(f"unable to export PNG: {destination}") from exc
+            raise ExportError(f"unable to export image: {destination}") from exc
         finally:
             if temporary_path is not None:
                 try:
@@ -81,8 +93,8 @@ class ImageExporter:
 
     @staticmethod
     def _validate_destination(destination: Path) -> None:
-        if destination.suffix.lower() != ".png":
-            raise ExportError(f"PNG destination required: {destination}")
+        if destination.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
+            raise ExportError(f"PNG or JPG destination required: {destination}")
         if not destination.parent.is_dir():
             raise ExportError(f"output directory does not exist: {destination.parent}")
 
@@ -107,6 +119,28 @@ def _array_to_clean_image(array: np.ndarray) -> Image.Image:
     mode = "RGB" if array.shape[2] == 3 else "RGBA"
     raw = array.astype(">u2", copy=False).tobytes()
     return Image.frombytes(mode, (array.shape[1], array.shape[0]), raw, "raw", f"{mode};16B")
+
+
+def _array_to_jpeg_image(array: np.ndarray) -> Image.Image:
+    """Convert an 8/16-bit image to opaque 8-bit RGB for JPEG output."""
+    if array.dtype not in (np.uint8, np.uint16):
+        raise ExportError("image must use uint8 or uint16 pixels")
+    if array.ndim == 2:
+        rgb = np.repeat(array[:, :, None], 3, axis=2)
+    elif array.ndim == 3 and array.shape[2] in (3, 4):
+        rgb = array[:, :, :3]
+        if array.shape[2] == 4:
+            max_value = 255 if array.dtype == np.uint8 else 65535
+            alpha = array[:, :, 3:4].astype(np.float64) / max_value
+            background = np.full_like(rgb, max_value, dtype=np.float64)
+            rgb = np.rint(rgb.astype(np.float64) * alpha + background * (1.0 - alpha))
+    else:
+        raise ExportError("image must be grayscale, RGB, or RGBA")
+
+    if array.dtype == np.uint16:
+        rgb = np.rint(np.asarray(rgb, dtype=np.float64) / 257.0)
+    rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+    return Image.fromarray(rgb)
 
 
 def _image_array(image: Image.Image | np.ndarray) -> np.ndarray:
